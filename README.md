@@ -20,10 +20,14 @@ Installation
 11.	Use the following controls to play the game:
 12.	Move Left: LEFT ARROW KEY
 13.	Move Right: RIGHT ARROW KEY
-14.	A chat function is also provided for players to communicate. You can send messages using the following steps:
-15.	Start typing your message: the characters will appear at the bottom of the screen.
-16.	Press ENTER to send your message: it will appear on the right side of the screen.
-17.	Press BACKSPACE to delete characters in your current message.
+14.	A chat function is also provided for players to communicate.
+    <br></br>You can send messages using the following steps:
+    <br></br>
+    • Start typing your message: the characters will appear at the bottom of the screen.
+   	<br></br>
+    • Press ENTER to send your message: it will appear on the right side of the screen.
+   	<br></br>
+    • Press BACKSPACE to delete characters in your current message.
 
 
 ## Troubleshooting
