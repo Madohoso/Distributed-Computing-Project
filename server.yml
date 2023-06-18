@@ -1,0 +1,160 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  # VPC Params
+  VPCName:
+    Description: Your VPC name
+    Type: String
+
+  VpcCIDR:
+    Description: Please enter the IP range (CIDR notation) for this VPC
+    Type: String
+    Default: 10.192.0.0/16
+
+  PublicSubnet1CIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+    Type: String
+    Default: 10.192.10.0/24
+
+  ####################################################
+  # elasticbeanstalk paramaters
+  AppName:
+    Description: Your elasticbeanstalk app name
+    Type: String
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Ref VPCName
+  
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Ref VPCName
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+  
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !Ref PublicSubnet1CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${VPCName} Public Subnet (AZ1)
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${VPCName} Public Routes
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+  
+  sampleApplication:
+    Type: AWS::ElasticBeanstalk::Application
+    Properties:
+      ApplicationName: !Ref AppName
+      Description: AWS Elastic Beanstalk Application
+  
+  sampleApplicationVersion:
+    Type: AWS::ElasticBeanstalk::ApplicationVersion
+    Properties:
+      ApplicationName:
+        Ref: sampleApplication
+      Description: AWS ElasticBeanstalk Application Version
+      SourceBundle:
+        S3Bucket: !Sub "elasticbeanstalk-samples-${AWS::Region}-pygamedistsample"
+        S3Key: server.zip
+  
+  sampleConfigurationTemplate:
+    Type: AWS::ElasticBeanstalk::ConfigurationTemplate
+    Properties:
+      ApplicationName:
+        Ref: sampleApplication
+      Description: AWS ElasticBeanstalk Configuration Template
+      OptionSettings:
+      - Namespace: aws:autoscaling:launchconfiguration
+        OptionName: InstanceType
+        Value: t3.micro
+      - Namespace: aws:elasticbeanstalk:environment
+        OptionName: EnvironmentType
+        Value: SingleInstance
+      - Namespace: aws:autoscaling:launchconfiguration
+        OptionName: IamInstanceProfile
+        Value: !Ref MyInstanceProfile
+      SolutionStackName: 64bit Amazon Linux 2 v3.5.8 running Docker
+  
+  sampleEnvironment:
+    Type: AWS::ElasticBeanstalk::Environment
+    Properties:
+      CNAMEPrefix: !Ref AppName
+      ApplicationName:
+        Ref: sampleApplication
+      Description: AWS ElasticBeanstalk Sample Environment
+      TemplateName:
+        Ref: sampleConfigurationTemplate
+      VersionLabel:
+        Ref: sampleApplicationVersion
+      OptionSettings:
+      - Namespace: aws:ec2:vpc
+        OptionName: Subnets
+        Value: !Ref PublicSubnet1
+  
+  MyInstanceRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Description: Beanstalk EC2 role
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier
+  
+  MyInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: 
+      Roles:
+        - !Ref MyInstanceRole
+
+  
+
+Outputs:
+  VPC:
+    Description: A reference to the created VPC
+    Value: !Ref VPC
