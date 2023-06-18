@@ -27,8 +27,8 @@ Installation
 
 
 ## Troubleshooting
-<br></br>
 If the game does not run, ensure that:
+<br></br>
 •	The server is running and accessible through the network.<br></br>
 •	Your Python version is up to date and Pygame is installed correctly.<br></br>
 •	You're running the client script from the correct directory.<br></br>
