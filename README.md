@@ -28,11 +28,11 @@ Installation
 
 ## Troubleshooting
 If the game does not run, ensure that:
-•	The server is running and accessible through the network.
-•	Your Python version is up to date and Pygame is installed correctly.
-•	You're running the client script from the correct directory.
-•	Your firewall or security software isn't blocking the connection.
-•	In case of other issues, please refer to the game's documentation or contact support.
+•	The server is running and accessible through the network.<br></br>
+•	Your Python version is up to date and Pygame is installed correctly.<br></br>
+•	You're running the client script from the correct directory.<br></br>
+•	Your firewall or security software isn't blocking the connection. <br></br>
+•	In case of other issues, please refer to the game's documentation or contact support.<br></br>
 ## Conclusion
 We hope you enjoy playing Car Racing! If you have any feedback or suggestions, we would love to hear from you.
 
