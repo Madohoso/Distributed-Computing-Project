@@ -39,19 +39,19 @@ class CarRacing:
     def initialize(self):
         self.crashed = False
 
-        self.carImg = pygame.image.load('/Users/macbookair/Downloads/CSE_354/SourceCode/img/car.png')
+        self.carImg = pygame.image.load('img/car.png')
         self.car_x_coordinate = [(self.display_width * 0.45), (self.display_width * 0.55)] # x coordinates for player 0 and 1
         self.car_y_coordinate = (self.display_height * 0.8)
         self.car_width = 49
 
-        self.enemy_car = pygame.image.load('/Users/macbookair/Downloads/CSE_354/SourceCode/img/enemy_car_1.png')
+        self.enemy_car = pygame.image.load('img/enemy_car_1.png')
         self.enemy_car_startx = random.randrange(310, 450)
         self.enemy_car_starty = -600
         self.enemy_car_speed = 5
         self.enemy_car_width = 49
         self.enemy_car_height = 100
 
-        self.bgImg = pygame.image.load('/Users/macbookair/Downloads/CSE_354/SourceCode/img/back_ground.png')
+        self.bgImg = pygame.image.load('img/back_ground.png')
         self.bg_x1 = (self.display_width / 2) - (360 / 2)
         self.bg_x2 = (self.display_width / 2) - (360 / 2)
         self.bg_y1 = 0
@@ -62,8 +62,6 @@ class CarRacing:
     def car(self, car_x_coordinate, car_y_coordinate):
         self.gameDisplay.blit(self.carImg, (car_x_coordinate, int(car_y_coordinate)))
 
-
-
     def run_car(self):
         self.gameDisplay = pygame.display.set_mode((self.display_width, self.display_height))
         pygame.display.set_caption("Player" + " " + str(self.player + 1))
@@ -71,14 +69,16 @@ class CarRacing:
         while not self.crashed:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    self.network.send(f"quit,{self.player}\n")
+                    self.network.send(f"quit,{self.player}")
                     self.display_message("YOU LOST!!")
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT:
                         self.car_x_coordinate[self.player] -= 50
+                        self.network.send(f"update,{self.player},{self.car_x_coordinate[self.player]}")
                     if event.key == pygame.K_RIGHT:
                         self.car_x_coordinate[self.player] += 50
+                        self.network.send(f"update,{self.player},{self.car_x_coordinate[self.player]}")
                     elif event.key == pygame.K_RETURN:  # Handle chat event when Return key is pressed
                         self.handle_chat_event(event)
                     elif event.key == pygame.K_BACKSPACE:  # Handle backspace event
@@ -86,14 +86,15 @@ class CarRacing:
                     else:
                         self.handle_chat_event(event)
 
-            game_state = self.network.send(f"update,{self.player},{self.car_x_coordinate[self.player]}\n")
-            self.update_state(game_state["game_state"])
-            self.enemy_car_startx = game_state["enemy_car_state"]["startx"]
-            self.enemy_car_starty = game_state["enemy_car_state"]["starty"]
-            self.enemy_car_speed = game_state["enemy_car_state"]["speed"]
-
+            # game_state = self.network.send(f"update,{self.player},{self.car_x_coordinate[self.player]}\n")
+            
+            self.update_state()
+            # self.enemy_car_startx = game_state["enemy_car_state"]["startx"]
+            # self.enemy_car_starty = game_state["enemy_car_state"]["starty"]
+            # self.enemy_car_speed = game_state["enemy_car_state"]["speed"]
             self.gameDisplay.fill(self.black)
             self.back_ground_road()
+            
             self.run_enemy_car(self.enemy_car_startx, self.enemy_car_starty)
             self.enemy_car_starty += self.enemy_car_speed
 
@@ -165,28 +166,29 @@ class CarRacing:
         pygame.quit()
 
 
-    def update_state(self, game_state):
-        if game_state is not None:
-            if game_state == "win":
-                self.display_message("YOU WON!!")
-            else:
-                try:
-                    messages = parseMessage(game_state)
-                    for game_state in messages:
-                        if game_state.startswith("update"):
-                            splitted = game_state.split(",")
-                            player, x_coordinate = int(splitted[1]), float(splitted[2])
-                            self.car_x_coordinate[player] = x_coordinate
-                        elif game_state.startswith("quit"):
-                            player = int(game_state.split(",")[1])
-                            self.display_message("Player {} WON!!!".format(player + 1))
-                        elif game_state.startswith("chat"):
-                            chat_message = game_state.split(",", 1)[1]
-                            self.chat_messages.append(chat_message)
-                except KeyError as e:
-                    print("Error updating game state:", e)
-
-
+    def update_state(self):
+        length = len(self.network.msgs)
+        for i in range(length):
+            game_state = self.network.msgs.pop(0)
+            splitted = game_state.split(",")
+            if splitted[0] == "update":
+                splitted = game_state.split(",")
+                player, x_coordinate = int(splitted[1]), float(splitted[2])
+                
+                self.car_x_coordinate[player] = x_coordinate
+                
+            elif splitted[0] == "chat":
+                self.chat_messages.append(splitted[1])
+            elif splitted[0] == "enemey":
+                
+                self.enemy_car_startx = float(splitted[1])
+                self.enemy_car_starty = float(splitted[2])
+                self.enemy_car_speed = float(splitted[3])
+            # elif game_state == "quit":
+            #     player = int(game_state.split(",")[1])
+            #     self.display_message("Player {} WON!!!".format(player + 1))
+            
+            
 
 
     def back_ground_road(self):

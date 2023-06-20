@@ -6,6 +6,7 @@ from car_racing import CarRacing
 def run_game():
     n = Network()
     player = int(n.get_p())
+    n.start()
     print("You are player:", player)
     
     game = CarRacing(n, player)
