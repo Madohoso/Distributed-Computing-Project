@@ -2,6 +2,7 @@ from _thread import *
 import socket
 import pickle
 import random
+import time
 
 class Server:
     def __init__(self):
@@ -33,17 +34,20 @@ class Server:
                 print("Starting game!")
                 for i in range(2):
                     start_new_thread(self.threaded_client, (self.clients[i], i))
-                    start_new_thread(self.thread_enemy,(self.recievers[i],i))
+                
+                start_new_thread(self.thread_enemy,())
 
-    def thread_enemy(self, conn, player):
+    def thread_enemy(self):
         while True:
-            self.enemy_car_state["starty"] += self.enemy_car_state["speed"]
-            if self.enemy_car_state["starty"] > 600:  # Assuming 600 is the display height
-                self.enemy_car_state["starty"] = 0 - 100  # Assuming 100 is the enemy car height
-                self.enemy_car_state["startx"] = random.randrange(310, 450)                    
-            # for reciever in self.recievers:
-            msg = f'enemey,{self.enemy_car_state["startx"]},{self.enemy_car_state["starty"]},{self.enemy_car_state["speed"]}'
-            conn.send(msg.encode('utf-8'))
+            # self.enemy_car_state["starty"] += self.enemy_car_state["speed"]
+            # if self.enemy_car_state["starty"] > 600:  # Assuming 600 is the display height
+                # self.enemy_car_state["starty"] = 0 - 100  # Assuming 100 is the enemy car height
+                rand_enemy = random.randrange(310, 450)                    
+            
+                msg = f'enemey,{rand_enemy},{-100},{self.enemy_car_state["speed"]}'
+                for reciever in self.recievers:
+                    reciever.send(msg.encode('utf-8'))
+                time.sleep(2)
 
     def threaded_client(self, conn, player):
         conn.send(str.encode(str(player)))
@@ -91,7 +95,11 @@ class Server:
                             for reciever in self.recievers:
                                 reciever.send(msg.encode('utf-8'))
                             # self.recievers[1].send(msg.encode('utf-8'))
-                            
+                    elif reply.startswith("quit"):
+                        msg = f'quit,{player}'
+                        for reciever in self.recievers:
+                            reciever.send(msg.encode('utf-8'))
+
 
             except ConnectionResetError:
                 print("Player", player, "disconnected")
@@ -107,9 +115,7 @@ class Server:
             print("Player", remaining_player, "wins!")
 
             # Send winning message to the remaining player
-            self.clients[0].sendall(
-                pickle.dumps({"game_state": "win", "enemy_car_state": self.enemy_car_state})
-            )
+            self.clients[0].send(f'quit,{remaining_player}')
 
 server = Server()
 server.start()

@@ -179,15 +179,13 @@ class CarRacing:
                 
             elif splitted[0] == "chat":
                 self.chat_messages.append(splitted[1])
-            elif splitted[0] == "enemey":
-                
+            elif splitted[0] == "enemey":  
                 self.enemy_car_startx = float(splitted[1])
                 self.enemy_car_starty = float(splitted[2])
                 self.enemy_car_speed = float(splitted[3])
-            # elif game_state == "quit":
-            #     player = int(game_state.split(",")[1])
-            #     self.display_message("Player {} WON!!!".format(player + 1))
-            
+            elif splitted[0] == "quit":
+                player = int(game_state.split(",")[1])
+                self.display_message("You Won")
             
 
 

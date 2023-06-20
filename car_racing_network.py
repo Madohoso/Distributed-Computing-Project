@@ -43,5 +43,5 @@ class Network(threading.Thread):
     def run(self):
         while True:
             msg = self.reciever.recv(2048).decode()
-            print('rcv messages',msg)
+            # print('rcv messages',msg)
             self.msgs.append(msg)
